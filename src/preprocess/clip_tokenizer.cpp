@@ -1,6 +1,6 @@
 #include <iostream>
 #include "clip_tokenizer.h"
-
+// come from https://github.com/monatis/clip.cpp
 
 bool is_chinese_char(UChar32 ch) {
     return (ch >= 0x4E00 && ch <= 0x9FFF)   || 
@@ -268,7 +268,7 @@ std::vector<int> CLIPTokenizer::encode(icu::UnicodeString unicode_text) {
             return bpe_tokens;
         }
     }
-    unicode_text = tokenize_chinese(unicode_text);
+    //unicode_text = tokenize_chinese(unicode_text);
     unicode_text.toLower();
     unicode_text.trim();
     icu::UnicodeString word;
@@ -321,30 +321,35 @@ TokenizerResult CLIPTokenizer::tokenize(const std::vector<std::string>& texts) {
     
     TokenizerResult tokenizer_result;
 
-    size_t max_len = 0;
-    for (const auto& tokens : result) {
-        if (tokens.size() > max_len) {
-            max_len = tokens.size();
-        }
-    }
+    size_t max_len = 77;
+    // for (const auto& tokens : result) {
+    //     if (tokens.size() > max_len) {
+    //         max_len = tokens.size();
+    //     }
+    // }
 
-    std::vector<std::vector<int>> attention_mask;
+    // std::vector<std::vector<int>> attention_mask;
     std::vector<std::vector<int>> input_ids;
     for (auto& tokens : result) {
-        std::vector<int> mask;
-        for (size_t i = 0; i < tokens.size(); ++i) {
-            mask.push_back(1);
-        }
-        while (mask.size() < max_len) {
-            mask.push_back(0);
-            tokens.push_back(encoder[icu::UnicodeString::fromUTF8("<|endoftext|>")]);
+        // std::vector<int> mask;
+        // for (size_t i = 0; i < tokens.size(); ++i) {
+        //     mask.push_back(1);
+        // }
+        while (tokens.size() < max_len) {
+            // mask.push_back(0);
+            tokens.push_back(0);
         }
         input_ids.push_back(tokens);
-        attention_mask.push_back(mask);
+        // attention_mask.push_back(mask);
     }
 
-    tokenizer_result.attention_mask = attention_mask;
+    // tokenizer_result.attention_mask = attention_mask;
     tokenizer_result.tokens = input_ids;
 
     return tokenizer_result;
 }
+
+
+
+
+

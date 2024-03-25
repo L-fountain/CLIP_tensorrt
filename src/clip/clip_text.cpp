@@ -1,4 +1,5 @@
 #include "clip.h"
+#include "clip_tokenizer.h"
 
 using namespace nvinfer1;
 
@@ -150,35 +151,34 @@ bool CLIP_Text::infer()
     return true;
 }
 
+CLIPTokenizer tokenizer("/home/TensorRT-8.6.1.6/samples/my_demo/vocab/bpe_simple_vocab_16e6.txt");
 
 
 bool CLIP_Text::processInput(const samplesCommon::BufferManager& buffers)
 {
     const int textLength = mInputDims.d[1];
 
-    // 读取图片
-    cv::Mat origin_img;
-    origin_img = cv::imread("/home/CLIP.png", cv::IMREAD_COLOR);
+    std::vector<std::string> words={"a diagram", "a dog", "a cat"};
+    
+    //tokenizer 单个短语 100层循环0.0303437 s左右
+    TokenizerResult result = tokenizer.tokenize(words);
 
-    // 检查图片是否成功读取
-    if (origin_img.empty()) {
-        std::cout << "Could not open or find the image" << std::endl;
-        return -1;
+    std::cout << "Tokens: " << std::endl;
+    std::cout<< result.tokens[0].size()<<std::endl;
+    for(const auto& temp: result.tokens){
+        for (const auto& token : temp) {
+            std::cout << token << " ";
+        }
+        std::cout << std::endl;
     }
+    std::cout << std::endl;
 
-    // cv::Mat processed_img = cv::dnn::blobFromImage(origin_img, 1 / 255.0, cv::Size(inputW, inputH), cv::Scalar(),
-    //                                        true, false);
-    // ImageTransformer T(inputH, inputW, mean, std);
+    float* hostDataBuffer = static_cast<float*>(buffers.getHostBuffer(mParams.inputTensorNames[0]));
 
-    // cv::Mat processed_img;
-    // T.transform(origin_img, processed_img);
-
-    // float* hostDataBuffer = static_cast<float*>(buffers.getHostBuffer(mParams.inputTensorNames[0]));
-
-    // // 验证是否成功分配内存
-    // if (!hostDataBuffer) {
-    //     throw std::runtime_error("Failed to allocate memory for the buffer.");
-    // }
+    // 验证是否成功分配内存
+    if (!hostDataBuffer) {
+        throw std::runtime_error("Failed to allocate memory for the buffer.");
+    }
 
     // preprocess(origin_img, inputH, inputW, static_cast<float*>(buffers.getDeviceBuffer(mParams.inputTensorNames[0])));
     // cv::Size size(224, 224);

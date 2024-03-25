@@ -91,6 +91,12 @@ __global__ void process(const uchar* srcData, float* tgtData, const int h, const
 }
 
 
+/*
+srcImg:    source image for inference
+dstData:   data after preprocess (resize / bgr to rgb / hwc to chw / normalize)
+dstHeight: model input height
+dstWidth:  model input width
+*/
 void preprocess(const cv::Mat& srcImg, const int dstHeight, const int dstWidth, float* dstDevData)
 {
     int srcHeight = srcImg.rows;

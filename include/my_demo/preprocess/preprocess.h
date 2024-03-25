@@ -8,8 +8,8 @@ void preprocess(const cv::Mat& srcImg, const int dstHeight, const int dstWidth, 
 /*
 srcImg:    source image for inference
 dstData:   data after preprocess (resize / bgr to rgb / hwc to chw / normalize)
-dstHeight: CNN input height
-dstWidth:  CNN input width
+dstHeight: model input height
+dstWidth:  model input width
 */
 
 

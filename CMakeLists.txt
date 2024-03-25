@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.13)
 
 project(CLIP_DEMO VERSION 1.0)
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 
 # 设置cuda语言和CUDA架构
 enable_language(CUDA)
@@ -9,6 +9,7 @@ set(CMAKE_CUDA_ARCHITECTURES 86)
 
 find_package(CUDA 11.4 REQUIRED)
 find_package(OpenCV REQUIRED)
+find_package(ICU REQUIRED COMPONENTS uc i18n)
 
 # 设置项目根目录变量
 set(PROJECT_ROOT_DIR ${CMAKE_CURRENT_LIST_DIR})
