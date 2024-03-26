@@ -331,15 +331,23 @@ TokenizerResult CLIPTokenizer::tokenize(const std::vector<std::string>& texts) {
     // std::vector<std::vector<int>> attention_mask;
     std::vector<std::vector<int>> input_ids;
     for (auto& tokens : result) {
+        // truncation
+        if(tokens.size() > max_len)
+        {
+            tokens.resize(76);
+            tokens.emplace_back(encoder[icu::UnicodeString::fromUTF8("<|endoftext|>")]);
+        }
         // std::vector<int> mask;
         // for (size_t i = 0; i < tokens.size(); ++i) {
         //     mask.push_back(1);
         // }
+        // 
+        // Supplement zero
         while (tokens.size() < max_len) {
             // mask.push_back(0);
-            tokens.push_back(0);
+            tokens.emplace_back(0);
         }
-        input_ids.push_back(tokens);
+        input_ids.emplace_back(tokens);
         // attention_mask.push_back(mask);
     }
 

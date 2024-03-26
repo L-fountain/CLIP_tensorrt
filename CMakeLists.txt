@@ -19,16 +19,13 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-# 设置公共的包含目录
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
-
 # 添加子目录
 add_subdirectory(third_party) # 如果需要自行编译第三方库
 add_subdirectory(external)    # 使用FetchContent获取并构建外部依赖
 
 # add TensorRT8
 include_directories(/home/TensorRT-8.6.1.6/include)
-include_directories(/home/TensorRT-8.6.1.6/samples/common)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/common)
 
 set(TENSORRT_LIB_PATH "/home/TensorRT-8.6.1.6/lib")
 file(GLOB LIBS "${TENSORRT_LIB_PATH}/*.so")

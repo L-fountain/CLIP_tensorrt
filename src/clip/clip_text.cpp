@@ -101,27 +101,34 @@ bool CLIP_Text::infer()
         return false;
     }
     
-    int BATCH_SIZE = 1;
+    int BATCH_SIZE = 3;
     Dims2 input_dims{BATCH_SIZE, textLength};  //Batchsize*textLength
-    bool flag = context->setInputShape(mEngine->getIOTensorName(0), input_dims);
+    auto flag = context->setInputShape(mEngine->getIOTensorName(0), input_dims);
+
+    if(!flag)
+    {
+       return false;
+    }
 
     // Create RAII buffer manager object
     samplesCommon::BufferManager buffers(mEngine, 0, context.get());
     auto start = std::chrono::system_clock::now();
 
-    // if (!processInput(buffers))
-    // {
-    //     return false;
-    // }
-
-    for(int i=0; i<100; i++){
-    // Read the input data into the managed buffers
-    // ASSERT(mParams.inputTensorNames.size() == 1);
-        if (!processInput(buffers))
-        {
-            return false;
-        }
+    if (!processInput(buffers))
+    {
+        return false;
     }
+
+    // tokenizer 单个短语 100层循环0.0303437 s左右 
+    // 3个短语100层循环0.07秒左右(算内存拷贝)
+    // for(int i=0; i<100; i++){
+    // // Read the input data into the managed buffers
+    // // ASSERT(mParams.inputTensorNames.size() == 1);
+    //     if (!processInput(buffers))
+    //     {
+    //         return false;
+    //     }
+    // }
 
     auto end = std::chrono::system_clock::now();
     // 计算并输出时间差
@@ -130,7 +137,7 @@ bool CLIP_Text::infer()
     std::cout << "Elapsed time: " << elapsed_seconds.count() << " seconds.\n";
 
     // Memcpy from host input buffers to device input buffers
-    // buffers.copyInputToDevice();
+    buffers.copyInputToDevice();
 
     // data() C++11 new feature, returns a pointer to the first element inside the container
     bool status = context->executeV2(buffers.getDeviceBindings().data());
@@ -160,7 +167,6 @@ bool CLIP_Text::processInput(const samplesCommon::BufferManager& buffers)
 
     std::vector<std::string> words={"a diagram", "a dog", "a cat"};
     
-    //tokenizer 单个短语 100层循环0.0303437 s左右
     TokenizerResult result = tokenizer.tokenize(words);
 
     std::cout << "Tokens: " << std::endl;
@@ -173,17 +179,17 @@ bool CLIP_Text::processInput(const samplesCommon::BufferManager& buffers)
     }
     std::cout << std::endl;
 
-    float* hostDataBuffer = static_cast<float*>(buffers.getHostBuffer(mParams.inputTensorNames[0]));
+    int* hostDataBuffer = static_cast<int*>(buffers.getHostBuffer(mParams.inputTensorNames[0]));
 
     // 验证是否成功分配内存
     if (!hostDataBuffer) {
         throw std::runtime_error("Failed to allocate memory for the buffer.");
     }
 
-    // preprocess(origin_img, inputH, inputW, static_cast<float*>(buffers.getDeviceBuffer(mParams.inputTensorNames[0])));
-    // cv::Size size(224, 224);
-    // Norm n = Norm::mean_std(mean, std, 1/255.0, ChannelType::Invert);
-    // StandNorm_c3(hostDataBuffer, origin_img, n, size);
+    for (size_t i = 0; i < result.tokens.size(); ++i) {
+        std::copy(result.tokens[i].begin(), result.tokens[i].end(), hostDataBuffer + i * 77);
+    }
+
 
     return true;
 }
@@ -193,16 +199,16 @@ bool CLIP_Text::processInput(const samplesCommon::BufferManager& buffers)
 bool CLIP_Text::verifyOutput(const samplesCommon::BufferManager& buffers)
 {
     const int outputSize = mOutputDims.d[1];
-    std::cout << outputSize << std::endl;
+
     float* output = static_cast<float*>(buffers.getHostBuffer(mParams.outputTensorNames[0]));
 
     std::ofstream outputFile("output.txt", std::ios::out);
 
     // 将输出写入文本文件
-    for (int i = 0; i < 512; ++i) {
+    for (int i = 0; i < outputSize; ++i) {
         outputFile << output[i];
         // 如果不是最后一个元素，则添加分隔符
-        if (i != 512 - 1) {
+        if (i != outputSize - 1) {
             outputFile << ",";
         }
     }
