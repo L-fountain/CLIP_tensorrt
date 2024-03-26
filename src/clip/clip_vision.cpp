@@ -79,6 +79,7 @@ bool CLIP_Vision::build()
         return false;
     }
 
+    // 判断输入输出是否符合
     ASSERT(network->getNbInputs() == 1);
     mInputDims = network->getInput(0)->getDimensions();
     ASSERT(mInputDims.nbDims == 4);
@@ -86,6 +87,9 @@ bool CLIP_Vision::build()
     ASSERT(network->getNbOutputs() == 1);
     mOutputDims = network->getOutput(0)->getDimensions();
     ASSERT(mOutputDims.nbDims == 2);
+
+    // 加载均值和方差变为常量内存
+    init_constants(image_mean, image_std);
 
     return true;
 }
@@ -108,7 +112,13 @@ bool CLIP_Vision::infer()
     Dims4 input_dims{BATCH_SIZE, channel, inputH, inputW};  //NCHW
     bool flag = context->setInputShape(mEngine->getIOTensorName(0), input_dims);
 
+    if(!flag)
+    {
+        return false;
+    }
+
     // Create RAII buffer manager object
+    // 简单的说，RAII 的做法是使用一个对象，在其构造时获取资源，在对象生命期控制对资源的访问使之始终保持有效，最后在对象析构的时候释放资源
     samplesCommon::BufferManager buffers(mEngine, 0, context.get());
     auto start = std::chrono::system_clock::now();
 
@@ -117,7 +127,7 @@ bool CLIP_Vision::infer()
     //     return false;
     // }
 
-    for(int i=0; i<100; i++){
+    for(int i=0; i<1000; i++){
     // Read the input data into the managed buffers
     // ASSERT(mParams.inputTensorNames.size() == 1);
         if (!processInput(buffers))
@@ -162,9 +172,6 @@ bool CLIP_Vision::processInput(const samplesCommon::BufferManager& buffers)
     const int inputH = mInputDims.d[2];
     const int inputW = mInputDims.d[3];
 
-    float mean[3]={0.48145466, 0.4578275, 0.40821073};
-    float std[3] ={0.26862954, 0.26130258, 0.27577711};
-
     // 读取图片
     cv::Mat origin_img;
     origin_img = cv::imread("/home/CLIP.png", cv::IMREAD_COLOR);
@@ -184,14 +191,17 @@ bool CLIP_Vision::processInput(const samplesCommon::BufferManager& buffers)
 
     // float* hostDataBuffer = static_cast<float*>(buffers.getHostBuffer(mParams.inputTensorNames[0]));
 
-    // // 验证是否成功分配内存
+    // 验证是否成功分配内存
     // if (!hostDataBuffer) {
     //     throw std::runtime_error("Failed to allocate memory for the buffer.");
     // }
 
     preprocess(origin_img, inputH, inputW, static_cast<float*>(buffers.getDeviceBuffer(mParams.inputTensorNames[0])));
+
+    // const float mean_[3] = {image_mean[0], image_mean[1], image_mean[2]};
+    // const float std_[3] = {image_std[0], image_std[1], image_std[2]};
     // cv::Size size(224, 224);
-    // Norm n = Norm::mean_std(mean, std, 1/255.0, ChannelType::Invert);
+    // Norm n = Norm::mean_std(mean_, std_, 1/255.0, ChannelType::Invert);
     // StandNorm_c3(hostDataBuffer, origin_img, n, size);
 
     return true;

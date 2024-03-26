@@ -78,6 +78,7 @@ bool CLIP_Text::build()
         return false;
     }
 
+    // 判断输入输出是否符合
     ASSERT(network->getNbInputs() == 1);
     mInputDims = network->getInput(0)->getDimensions();
     ASSERT(mInputDims.nbDims == 2);
@@ -111,6 +112,7 @@ bool CLIP_Text::infer()
     }
 
     // Create RAII buffer manager object
+    // 简单的说，RAII 的做法是使用一个对象，在其构造时获取资源，在对象生命期控制对资源的访问使之始终保持有效，最后在对象析构的时候释放资源
     samplesCommon::BufferManager buffers(mEngine, 0, context.get());
     auto start = std::chrono::system_clock::now();
 

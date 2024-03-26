@@ -70,12 +70,16 @@ protected:
 // For the specific implementation of vision
 class CLIP_Vision: public CLIP_Base{
 public:
-    CLIP_Vision(const samplesCommon::OnnxSampleParams& params):CLIP_Base(params){}
+    CLIP_Vision(const samplesCommon::VisionParams& params):CLIP_Base(params),
+    image_mean(params.image_mean),image_std(params.image_std){}
 
     virtual bool build() override;
     virtual bool infer() override;
     virtual bool processInput(const samplesCommon::BufferManager& buffers) override;
     virtual bool verifyOutput(const samplesCommon::BufferManager& buffers) override;
+private:
+    std::vector<float> image_mean;
+    std::vector<float> image_std;
 };
 
 
@@ -83,7 +87,7 @@ public:
 // For the special implementation of language
 class CLIP_Text: public CLIP_Base{
 public:
-    CLIP_Text(const samplesCommon::OnnxSampleParams& params):CLIP_Base(params){}
+    CLIP_Text(const samplesCommon::LanguageParams& params):CLIP_Base(params){}
 
     virtual bool build() override;
     virtual bool infer() override;

@@ -1,5 +1,7 @@
 #include "preprocess.h"
 
+
+// cpu实现, 速度没GPU快，貌似精度比GPU高
 void ImageTransformer::transform(const cv::Mat& input_img, cv::Mat& output_img) {
         cv::Mat img_cvtColr;
         // Resize

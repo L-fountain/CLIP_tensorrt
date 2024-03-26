@@ -3,15 +3,17 @@
 
 #include <opencv2/opencv.hpp>
 #include <cuda_runtime.h>
+#include <vector>
 
-void preprocess(const cv::Mat& srcImg, const int dstHeight, const int dstWidth, float* dstDevData);
 /*
 srcImg:    source image for inference
 dstData:   data after preprocess (resize / bgr to rgb / hwc to chw / normalize)
 dstHeight: model input height
 dstWidth:  model input width
 */
+void preprocess(const cv::Mat& srcImg, const int dstHeight, const int dstWidth, float* dstDevData);
 
+void init_constants(std::vector<float>&, std::vector<float>&);
 
 class ImageTransformer{
 public:

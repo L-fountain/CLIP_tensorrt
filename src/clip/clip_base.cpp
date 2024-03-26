@@ -71,7 +71,7 @@ bool CLIP_Base::build()
         return false;
     }
 
-    // Assuming that there is only one node for both input and output
+    // 判断输入输出是否符合
     ASSERT(network->getNbInputs() == 1);
     mInputDims = network->getInput(0)->getDimensions();
     ASSERT(mInputDims.nbDims == 4);
@@ -92,6 +92,7 @@ bool CLIP_Base::build()
 bool CLIP_Base::infer()
 {
     // Create RAII buffer manager object
+    // 简单的说，RAII 的做法是使用一个对象，在其构造时获取资源，在对象生命期控制对资源的访问使之始终保持有效，最后在对象析构的时候释放资源
     samplesCommon::BufferManager buffers(mEngine);
 
     auto context = SampleUniquePtr<nvinfer1::IExecutionContext>(mEngine->createExecutionContext());

@@ -32,32 +32,54 @@
 #include "opencv2/opencv.hpp"
 #include "preprocess.h"
 
-using namespace nvinfer1;
-using samplesCommon::SampleUniquePtr;
 
 const std::string gSampleName = "CLIP_demo";
-
 
 //!
 //! \brief Initializes members of the params struct using the command line args
 //!
-samplesCommon::OnnxSampleParams initializeSampleParams(const samplesCommon::Args& args)
+samplesCommon::VisionParams initializeVisionParams(const samplesCommon::Args& args)
 {
-    samplesCommon::OnnxSampleParams params;
-    if (args.dataDirs.empty()) // Use default directories if user hasn't provided directory paths
+    samplesCommon::VisionParams params;
+    if(args.dataDirs.empty())
     {
-        
+        params.dataDirs.emplace_back("../../model/");
     }
-    else // Use the data directory provided by the user
+    else
     {
         params.dataDirs = args.dataDirs;
     }
-    params.onnxFileName = "t.onnx";
+    params.onnxFileName = args.vision_model_name.empty()? "v.onnx" : args.vision_model_name;
     params.inputTensorNames.push_back("input");
     params.outputTensorNames.push_back("output");
     params.dlaCore = args.useDLACore;
     params.int8 = args.runInInt8;
     params.fp16 = args.runInFp16;
+    params.image_mean = {0.48145466, 0.4578275, 0.40821073};
+    params.image_std = {0.26862954, 0.26130258, 0.27577711};   
+
+    return params;
+}
+
+samplesCommon::LanguageParams initializeLanguageParams(const samplesCommon::Args& args)
+{
+    samplesCommon::LanguageParams params;
+
+    if(args.dataDirs.empty())
+    {
+        params.dataDirs.emplace_back("../../model/");
+    }
+    else
+    {
+        params.dataDirs = args.dataDirs;
+    }
+    params.onnxFileName = args.language_model_name.empty()? "t.onnx" : args.language_model_name;
+    params.inputTensorNames.push_back("input");
+    params.outputTensorNames.push_back("output");
+    params.dlaCore = args.useDLACore;
+    params.int8 = args.runInInt8;
+    params.int8 = args.runInFp16;
+    params.vocab_path = "../../vocab//bpe_simple_vocab_16e6.txt";
 
     return params;
 }
@@ -72,14 +94,17 @@ void printHelpInfo()
         << std::endl;
     std::cout << "--help          Display help information" << std::endl;
     std::cout << "--datadir       Specify path to a data directory, overriding the default. This option can be used "
-                 "multiple times to add multiple directories. If no data directories are given, the default is to use "
-                 "(data/samples/mnist/, data/mnist/)"
+                 "multiple times to add multiple directories. The first path corresponds to the folder where the model "
+                 "is located If no data directories are given, the default is to use "
+                 "(../../model/)"
               << std::endl;
     std::cout << "--useDLACore=N  Specify a DLA engine for layers that support DLA. Value can range from 0 to n-1, "
                  "where n is the number of DLA engines on the platform."
               << std::endl;
     std::cout << "--int8          Run in Int8 mode." << std::endl;
     std::cout << "--fp16          Run in FP16 mode." << std::endl;
+    std::cout << "--vision_model_name       Specify the name of the visual model." << std::endl;
+    std::cout << "--language_model_name     Specify the name of the language model." << std::endl;
 }
 
 int main(int argc, char** argv)
@@ -102,19 +127,28 @@ int main(int argc, char** argv)
 
     sample::gLogger.reportTestStart(sampleTest);
 
-    // CLIP_Vision sample(initializeSampleParams(args));
-    CLIP_Text sample(initializeSampleParams(args));
+    CLIP_Vision V_Model(initializeVisionParams(args));
+    CLIP_Text L_Model(initializeLanguageParams(args));
 
     sample::gLogInfo << "Building and running a GPU inference engine for CLIP" << std::endl;
 
-    if (!sample.build())
+    if (!V_Model.build())
     {
         return sample::gLogger.reportFail(sampleTest);
     }
-    if (!sample.infer())
+    // if (!L_Model.build())
+    // {
+    //     return sample::gLogger.reportFail(sampleTest);
+    // }
+    if (!V_Model.infer())
     {
         return sample::gLogger.reportFail(sampleTest);
     }
+    // if (!L_Model.infer())
+    // {
+    //     return sample::gLogger.reportFail(sampleTest);
+    // }
+
 
     return sample::gLogger.reportPass(sampleTest);
 }

@@ -35,7 +35,7 @@ namespace samplesCommon
 //!
 struct SampleParams
 {
-    int32_t batchSize{1};              //!< Number of inputs in a batch
+    // int32_t batchSize{1};              //!< Number of inputs in a batch
     int32_t dlaCore{-1};               //!< Specify the DLA core to run network on.
     bool int8{false};                  //!< Allow runnning the network in Int8 mode.
     bool fp16{false};                  //!< Allow running the network in FP16 mode.
@@ -64,6 +64,17 @@ struct OnnxSampleParams : public SampleParams
     std::string onnxFileName; //!< Filename of ONNX file of a network
 };
 
+struct VisionParams : public OnnxSampleParams
+{
+    std::vector<float> image_mean;
+    std::vector<float> image_std;
+};
+
+struct LanguageParams : public OnnxSampleParams
+{
+    std::string vocab_path;
+};
+
 //!
 //! \brief The UffSampleParams structure groups the additional parameters required by
 //!         networks that use Uff
@@ -82,11 +93,11 @@ struct Args
     bool runInFp16{false};
     bool help{false};
     int32_t useDLACore{-1};
-    int32_t batch{1};
     std::vector<std::string> dataDirs;
     std::string saveEngine;
     std::string loadEngine;
-    bool useILoop{false};
+    std::string vision_model_name;
+    std::string language_model_name;
 };
 
 //!
@@ -102,9 +113,10 @@ inline bool parseArgs(Args& args, int32_t argc, char* argv[])
     {
         int32_t arg;
         static struct option long_options[] = {{"help", no_argument, 0, 'h'}, {"datadir", required_argument, 0, 'd'},
-            {"int8", no_argument, 0, 'i'}, {"fp16", no_argument, 0, 'f'}, {"useILoop", no_argument, 0, 'l'},
+            {"int8", no_argument, 0, 'i'}, {"fp16", no_argument, 0, 'f'},
             {"saveEngine", required_argument, 0, 's'}, {"loadEngine", required_argument, 0, 'o'},
-            {"useDLACore", required_argument, 0, 'u'}, {"batch", required_argument, 0, 'b'}, {nullptr, 0, nullptr, 0}};
+            {"useDLACore", required_argument, 0, 'u'}, {"vision_model_name", no_argument, 0, 'v'}, 
+            {"language_model_name", no_argument, 0, 'l'}, {nullptr, 0, nullptr, 0}};
         int32_t option_index = 0;
         arg = getopt_long(argc, argv, "hd:iu", long_options, &option_index);
         if (arg == -1)
@@ -140,17 +152,22 @@ inline bool parseArgs(Args& args, int32_t argc, char* argv[])
             break;
         case 'i': args.runInInt8 = true; break;
         case 'f': args.runInFp16 = true; break;
-        case 'l': args.useILoop = true; break;
         case 'u':
             if (optarg)
             {
                 args.useDLACore = std::stoi(optarg);
             }
             break;
-        case 'b':
+        case 'v':
             if (optarg)
             {
-                args.batch = std::stoi(optarg);
+                args.vision_model_name = optarg;
+            }
+            break;
+        case 'l':
+            if (optarg)
+            {
+                args.language_model_name = optarg;
             }
             break;
         default: return false;
