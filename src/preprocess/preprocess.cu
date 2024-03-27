@@ -76,12 +76,11 @@ __global__ void resize(const uchar* srcData, const int srcH, const int srcW, flo
             }
         }
 
-        // // hwc to chw / bgr to rgb / normalize
+        // hwc to chw / bgr to rgb / normalize
         tgtData[idx] = ((float)temp[idx3 + 2] / 255.0 - MEAN[0]) / STD[0];
         tgtData[idx + tgtW * tgtH] = ((float)temp[idx3 + 1] / 255.0 - MEAN[1]) / STD[1];
         tgtData[idx + tgtW * tgtH * 2] = ((float)temp[idx3] / 255.0 - MEAN[2]) / STD[2];
     }
-
 }
 
 
@@ -115,7 +114,7 @@ void preprocess(const cv::Mat& srcImg, const int dstHeight, const int dstWidth, 
     int srcHeight = srcImg.rows;
     int srcWidth = srcImg.cols;
     int srcElements = srcHeight * srcWidth * 3;
-    // int dstElements = dstHeight * dstWidth * 3;
+    int dstElements = dstHeight * dstWidth * 3;
 
     // target data on device 这里一步到位直接拿来开辟好的GPU内存了，所以不需要再开辟内存了
     // float* dstDevData;
@@ -129,7 +128,7 @@ void preprocess(const cv::Mat& srcImg, const int dstHeight, const int dstWidth, 
     // source images data on device
     uchar* srcDevData;
     cudaMalloc((void**)&srcDevData, sizeof(uchar) * srcElements);
-    cudaMemcpy(srcDevData, srcImg.data, sizeof(uchar) * srcElements, cudaMemcpyHostToDevice);
+    cudaMemcpy(srcDevData, srcImg.ptr(), sizeof(uchar) * srcElements, cudaMemcpyHostToDevice);
 
     dim3 blockSize(16, 16); // 有待测试
     dim3 gridSize((dstWidth + blockSize.x - 1) / blockSize.x, (dstHeight + blockSize.y - 1) / blockSize.y);
@@ -138,7 +137,7 @@ void preprocess(const cv::Mat& srcImg, const int dstHeight, const int dstWidth, 
     resize<<<gridSize, blockSize>>>(srcDevData, srcHeight, srcWidth, dstDevData, dstHeight, dstWidth);
     cudaDeviceSynchronize();
 
-    // // hwc to chw / bgr to rgb / normalize
+    // // hwc to chw / bgr to rgb / normalize //与上面的resize合并了
     // process<<<gridSize, blockSize>>>(midDevData, dstDevData, dstHeight, dstWidth);
     // cudaDeviceSynchronize();
 
@@ -149,3 +148,4 @@ void preprocess(const cv::Mat& srcImg, const int dstHeight, const int dstWidth, 
     // cudaFree(midDevData);
     // cudaFree(dstDevData);
 }
+

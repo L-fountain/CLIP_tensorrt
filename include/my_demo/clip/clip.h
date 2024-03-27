@@ -10,6 +10,7 @@
 
 #include <cuda_runtime_api.h>
 #include "opencv2/opencv.hpp"
+#include "clip_tokenizer.h"
 
 using samplesCommon::SampleUniquePtr;
 
@@ -71,7 +72,7 @@ protected:
 class CLIP_Vision: public CLIP_Base{
 public:
     CLIP_Vision(const samplesCommon::VisionParams& params):CLIP_Base(params),
-    image_mean(params.image_mean),image_std(params.image_std){}
+    image_mean(params.image_mean),image_std(params.image_std),USE_GPU_PREPROCESS(true){}
 
     virtual bool build() override;
     virtual bool infer() override;
@@ -80,6 +81,7 @@ public:
 private:
     std::vector<float> image_mean;
     std::vector<float> image_std;
+    bool USE_GPU_PREPROCESS;
 };
 
 
@@ -87,12 +89,15 @@ private:
 // For the special implementation of language
 class CLIP_Text: public CLIP_Base{
 public:
-    CLIP_Text(const samplesCommon::LanguageParams& params):CLIP_Base(params){}
+    CLIP_Text(const samplesCommon::LanguageParams& params):CLIP_Base(params),
+    tokenizer(params.vocab_path){}
 
     virtual bool build() override;
     virtual bool infer() override;
     virtual bool processInput(const samplesCommon::BufferManager& buffers) override;
     virtual bool verifyOutput(const samplesCommon::BufferManager& buffers) override;
+private:
+    CLIPTokenizer tokenizer;
 };
 
 

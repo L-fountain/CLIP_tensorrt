@@ -45,8 +45,7 @@ samplesCommon::VisionParams initializeVisionParams(const samplesCommon::Args& ar
     {
         params.dataDirs.emplace_back("../../model/");
     }
-    else
-    {
+    else{
         params.dataDirs = args.dataDirs;
     }
     params.onnxFileName = args.vision_model_name.empty()? "v.onnx" : args.vision_model_name;
@@ -69,8 +68,7 @@ samplesCommon::LanguageParams initializeLanguageParams(const samplesCommon::Args
     {
         params.dataDirs.emplace_back("../../model/");
     }
-    else
-    {
+    else{
         params.dataDirs = args.dataDirs;
     }
     params.onnxFileName = args.language_model_name.empty()? "t.onnx" : args.language_model_name;
@@ -132,22 +130,22 @@ int main(int argc, char** argv)
 
     sample::gLogInfo << "Building and running a GPU inference engine for CLIP" << std::endl;
 
-    if (!V_Model.build())
-    {
-        return sample::gLogger.reportFail(sampleTest);
-    }
-    // if (!L_Model.build())
+    // if (!V_Model.build())
     // {
     //     return sample::gLogger.reportFail(sampleTest);
     // }
-    if (!V_Model.infer())
+    if (!L_Model.build())
     {
         return sample::gLogger.reportFail(sampleTest);
     }
-    // if (!L_Model.infer())
+    // if (!V_Model.infer())
     // {
     //     return sample::gLogger.reportFail(sampleTest);
     // }
+    if (!L_Model.infer())
+    {
+        return sample::gLogger.reportFail(sampleTest);
+    }
 
 
     return sample::gLogger.reportPass(sampleTest);

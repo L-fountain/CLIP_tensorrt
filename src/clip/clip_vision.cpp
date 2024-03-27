@@ -72,8 +72,29 @@ bool CLIP_Vision::build()
         return false;
     }
 
+    // 定义文件路径
+    std::string enginePath = "/home/clip2onnx/deploy/int8/VmodelInt8.engine";
+
+    // 打开文件并读取Engine数据
+    std::ifstream file(enginePath, std::ios::binary);
+    if (!file.good()) { /* 文件打开失败处理 */ }
+
+    // 获取文件大小
+    file.seekg(0, std::ios::end);
+    std::streampos fsize = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+    // 分配内存来存储Engine数据
+    std::vector<char> trtModelStream(fsize);
+    file.read(trtModelStream.data(), fsize);
+    file.close();
+
+    // 反序列化Engine
     mEngine = std::shared_ptr<nvinfer1::ICudaEngine>(
-        mRuntime->deserializeCudaEngine(plan->data(), plan->size()), samplesCommon::InferDeleter());
+        mRuntime->deserializeCudaEngine(trtModelStream.data(), fsize), samplesCommon::InferDeleter());
+
+    // mEngine = std::shared_ptr<nvinfer1::ICudaEngine>(
+    //     mRuntime->deserializeCudaEngine(plan->data(), plan->size()), samplesCommon::InferDeleter());
     if (!mEngine)
     {
         return false;
@@ -122,19 +143,19 @@ bool CLIP_Vision::infer()
     samplesCommon::BufferManager buffers(mEngine, 0, context.get());
     auto start = std::chrono::system_clock::now();
 
-    // if (!processInput(buffers))
-    // {
-    //     return false;
-    // }
-
-    for(int i=0; i<1000; i++){
-    // Read the input data into the managed buffers
-    // ASSERT(mParams.inputTensorNames.size() == 1);
-        if (!processInput(buffers))
-        {
-            return false;
-        }
+    if (!processInput(buffers))
+    {
+        return false;
     }
+
+    // for(int i=0; i<1000; i++){
+    // // Read the input data into the managed buffers
+    // // ASSERT(mParams.inputTensorNames.size() == 1);
+    //     if (!processInput(buffers))
+    //     {
+    //         return false;
+    //     }
+    // }
 
     auto end = std::chrono::system_clock::now();
     // 计算并输出时间差
@@ -143,7 +164,11 @@ bool CLIP_Vision::infer()
     std::cout << "Elapsed time: " << elapsed_seconds.count() << " seconds.\n";
 
     // Memcpy from host input buffers to device input buffers
-    // buffers.copyInputToDevice();
+    // If GPU preprocessing is used, not copy
+    if(!USE_GPU_PREPROCESS)
+    {
+        buffers.copyInputToDevice();
+    }
 
     // data() C++11 new feature, returns a pointer to the first element inside the container
     bool status = context->executeV2(buffers.getDeviceBindings().data());
@@ -174,35 +199,33 @@ bool CLIP_Vision::processInput(const samplesCommon::BufferManager& buffers)
 
     // 读取图片
     cv::Mat origin_img;
-    origin_img = cv::imread("/home/CLIP.png", cv::IMREAD_COLOR);
+    origin_img = cv::imread("/home/OIP-C.jpg", cv::IMREAD_COLOR);
 
     // 检查图片是否成功读取
     if (origin_img.empty()) {
         std::cout << "Could not open or find the image" << std::endl;
         return -1;
     }
+    
+    if(USE_GPU_PREPROCESS)
+    {
+        // GPU Preprocess
+        preprocess(origin_img, inputH, inputW, static_cast<float*>(buffers.getDeviceBuffer(mParams.inputTensorNames[0])));
+    }
+    else{
+        // CPU Preprocess
+        float* hostDataBuffer = static_cast<float*>(buffers.getHostBuffer(mParams.inputTensorNames[0]));
 
-    // cv::Mat processed_img = cv::dnn::blobFromImage(origin_img, 1 / 255.0, cv::Size(inputW, inputH), cv::Scalar(),
-    //                                        true, false);
-    // ImageTransformer T(inputH, inputW, mean, std);
+        // 验证是否成功分配内存
+        if (!hostDataBuffer) {
+            throw std::runtime_error("Failed to allocate memory for the buffer.");
+        }
 
-    // cv::Mat processed_img;
-    // T.transform(origin_img, processed_img);
-
-    // float* hostDataBuffer = static_cast<float*>(buffers.getHostBuffer(mParams.inputTensorNames[0]));
-
-    // 验证是否成功分配内存
-    // if (!hostDataBuffer) {
-    //     throw std::runtime_error("Failed to allocate memory for the buffer.");
-    // }
-
-    preprocess(origin_img, inputH, inputW, static_cast<float*>(buffers.getDeviceBuffer(mParams.inputTensorNames[0])));
-
-    // const float mean_[3] = {image_mean[0], image_mean[1], image_mean[2]};
-    // const float std_[3] = {image_std[0], image_std[1], image_std[2]};
-    // cv::Size size(224, 224);
-    // Norm n = Norm::mean_std(mean_, std_, 1/255.0, ChannelType::Invert);
-    // StandNorm_c3(hostDataBuffer, origin_img, n, size);
+        const float mean_[3] = {image_mean[0], image_mean[1], image_mean[2]};
+        const float std_[3] = {image_std[0], image_std[1], image_std[2]};
+        cv::Size size(inputW, inputH);
+        StandNorm_c3(hostDataBuffer, origin_img, Norm::mean_std(mean_, std_, 1/255.0, ChannelType::Invert), size);
+    }
 
     return true;
 }

@@ -1,5 +1,4 @@
 #include "clip.h"
-#include "clip_tokenizer.h"
 
 using namespace nvinfer1;
 
@@ -159,9 +158,6 @@ bool CLIP_Text::infer()
 
     return true;
 }
-
-CLIPTokenizer tokenizer("/home/TensorRT-8.6.1.6/samples/my_demo/vocab/bpe_simple_vocab_16e6.txt");
-
 
 bool CLIP_Text::processInput(const samplesCommon::BufferManager& buffers)
 {
