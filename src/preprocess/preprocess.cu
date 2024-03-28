@@ -94,6 +94,7 @@ __global__ void process(const uchar* srcData, float* tgtData, const int h, const
     int idx = ix + iy * w;
     int idx3 = idx * 3;
 
+    // hwc to chw / bgr to rgb / normalize
     if (ix < w && iy < h)
     {
         tgtData[idx] = ((float)srcData[idx3 + 2] / 255.0 - 0.48145466) / 0.26862954;  // R pixel
@@ -137,7 +138,7 @@ void preprocess(const cv::Mat& srcImg, const int dstHeight, const int dstWidth, 
     resize<<<gridSize, blockSize>>>(srcDevData, srcHeight, srcWidth, dstDevData, dstHeight, dstWidth);
     cudaDeviceSynchronize();
 
-    // // hwc to chw / bgr to rgb / normalize //与上面的resize合并了
+    //  hwc to chw / bgr to rgb / normalize 与上面的resize合并了
     // process<<<gridSize, blockSize>>>(midDevData, dstDevData, dstHeight, dstWidth);
     // cudaDeviceSynchronize();
 

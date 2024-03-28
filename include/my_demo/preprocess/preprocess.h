@@ -50,6 +50,6 @@ struct Norm{
 };
 
 
-void StandNorm_c3(void* model_input_buffer, cv::Mat& src_mat,const Norm& in, cv::Size& model_size);
+void StandNorm_c3(void* model_input_buffer, cv::Mat& src_mat,const Norm& in,const cv::Size& model_size);
 
 #endif  // PREPROCESS_H

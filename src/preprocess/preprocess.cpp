@@ -22,7 +22,7 @@ Norm Norm::None()
 * alpha 为 1; 
 *@return: 3通道
 */ 
-void StandNorm_c3(void* model_input_buffer, cv::Mat& src_mat,const Norm& in, cv::Size& model_size)
+void StandNorm_c3(void* model_input_buffer, cv::Mat& src_mat, const Norm& in, const cv::Size& model_size)
 {   
     cv::Mat img_cvtColr;    // 需要的话, 进行通道转换, bgr2rgb 或者 rgb2bgr
     cv::Mat img_convert;    // 利用cv::Mat的 convertTo 进行归一化除以255.0f
@@ -87,3 +87,4 @@ void StandNorm_c3(void* model_input_buffer, cv::Mat& src_mat,const Norm& in, cv:
         imgArray[2].data, imgArray[2].step.p[0]*imgArray[2].size[0]);
     return;
 }
+

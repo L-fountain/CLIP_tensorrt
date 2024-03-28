@@ -1,5 +1,6 @@
 #ifndef CLIP_TOKENIZER_H
 #define CLIP_TOKENIZER_H
+
 // come from https://github.com/monatis/clip.cpp
 #include <set>
 #include <unordered_map>

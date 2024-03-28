@@ -22,6 +22,7 @@ target_sources(PREPROCESS PRIVATE ${PREPROCESS_SOURCES} ${CUDA_SOURCE_FILE})
 target_include_directories(PREPROCESS PUBLIC
     $<BUILD_INTERFACE:${PROJECT_ROOT_DIR}/include/my_demo>
     $<BUILD_INTERFACE:${PROJECT_ROOT_DIR}/include/my_demo/preprocess>
+    $<BUILD_INTERFACE:${PROJECT_ROOT_DIR}/include/my_demo/clip>
     ${CUDA_INCLUDE_DIRS}
     ${OpenCV_INCLUDE_DIRS}
 )

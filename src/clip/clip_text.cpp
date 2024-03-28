@@ -1,6 +1,32 @@
 #include "clip.h"
+#include "preprocess.h"
 
 using namespace nvinfer1;
+
+bool CLIP_Text::read_text(const std::string& text_src){
+    std::filesystem::path filePath(text_src);
+    if (filePath.extension() == ".txt")
+    {
+        std::ifstream infile;
+        infile.open(text_src);
+        if (!infile.good())
+        {
+            sample::gLogInfo << "can't open " << text_src << std::endl;
+            return -1;
+        }
+
+        std::string s;
+        while (getline(infile, s))
+        {
+            texts.push_back(s);
+        }
+        infile.close();
+    }
+    else
+    {
+        texts.push_back(text_src);
+    }
+}
 
 bool CLIP_Text::build()
 {
@@ -94,6 +120,11 @@ bool CLIP_Text::build()
 bool CLIP_Text::infer()
 {
     const int textLength = mInputDims.d[1];
+    if(textLength != text_token_length)
+    {
+        sample::gLogInfo << "The configured text_token_length does not match the actual model" << std::endl;
+        return false;
+    }
 
     auto context = SampleUniquePtr<nvinfer1::IExecutionContext>(mEngine->createExecutionContext());
     if (!context)
@@ -113,7 +144,7 @@ bool CLIP_Text::infer()
     // Create RAII buffer manager object
     // 简单的说，RAII 的做法是使用一个对象，在其构造时获取资源，在对象生命期控制对资源的访问使之始终保持有效，最后在对象析构的时候释放资源
     samplesCommon::BufferManager buffers(mEngine, 0, context.get());
-    auto start = std::chrono::system_clock::now();
+    auto start = std::chrono::high_resolution_clock::now();
 
     if (!processInput(buffers))
     {
@@ -131,7 +162,7 @@ bool CLIP_Text::infer()
     //     }
     // }
 
-    auto end = std::chrono::system_clock::now();
+    auto end = std::chrono::high_resolution_clock::now();
     // 计算并输出时间差
     std::chrono::duration<double> elapsed_seconds = end - start;
     // 输出以秒为单位的时间差

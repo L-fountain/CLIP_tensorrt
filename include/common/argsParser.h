@@ -68,10 +68,13 @@ struct VisionParams : public OnnxSampleParams
 {
     std::vector<float> image_mean;
     std::vector<float> image_std;
+    std::string image_src;
 };
 
 struct LanguageParams : public OnnxSampleParams
 {
+    uint8_t text_token_length;
+    std::string text_src;
     std::string vocab_path;
 };
 

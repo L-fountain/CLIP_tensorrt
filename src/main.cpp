@@ -24,15 +24,6 @@
 
 #include "clip.h"
 
-#include <cstdlib>
-#include <fstream>
-#include <iostream>
-#include <sstream>
-
-#include "opencv2/opencv.hpp"
-#include "preprocess.h"
-
-
 const std::string gSampleName = "CLIP_demo";
 
 //!
@@ -56,6 +47,7 @@ samplesCommon::VisionParams initializeVisionParams(const samplesCommon::Args& ar
     params.fp16 = args.runInFp16;
     params.image_mean = {0.48145466, 0.4578275, 0.40821073};
     params.image_std = {0.26862954, 0.26130258, 0.27577711};   
+    params.image_src = "/home/TensorRT-8.6.1.6/samples/my_demo/include/common";
 
     return params;
 }
@@ -77,6 +69,8 @@ samplesCommon::LanguageParams initializeLanguageParams(const samplesCommon::Args
     params.dlaCore = args.useDLACore;
     params.int8 = args.runInInt8;
     params.int8 = args.runInFp16;
+    params.text_src = "123.txt";
+    params.text_token_length = 77;
     params.vocab_path = "../../vocab//bpe_simple_vocab_16e6.txt";
 
     return params;
@@ -130,22 +124,22 @@ int main(int argc, char** argv)
 
     sample::gLogInfo << "Building and running a GPU inference engine for CLIP" << std::endl;
 
-    // if (!V_Model.build())
-    // {
-    //     return sample::gLogger.reportFail(sampleTest);
-    // }
-    if (!L_Model.build())
+    if (!V_Model.build())
     {
         return sample::gLogger.reportFail(sampleTest);
     }
-    // if (!V_Model.infer())
+    // if (!L_Model.build())
     // {
     //     return sample::gLogger.reportFail(sampleTest);
     // }
-    if (!L_Model.infer())
+    if (!V_Model.infer())
     {
         return sample::gLogger.reportFail(sampleTest);
     }
+    // if (!L_Model.infer())
+    // {
+    //     return sample::gLogger.reportFail(sampleTest);
+    // }
 
 
     return sample::gLogger.reportPass(sampleTest);

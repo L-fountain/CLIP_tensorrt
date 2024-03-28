@@ -3,6 +3,27 @@
 
 using namespace nvinfer1;
 
+bool CLIP_Vision::read_image(const std::filesystem::path& filePath){
+    // 检查是否为文件
+    if (std::filesystem::is_regular_file(filePath))
+    {
+        // 检查文件扩展名是否为某种图像格式
+        if (std::find(supportedExtensions.begin(), supportedExtensions.end(), filePath.extension().string()) != supportedExtensions.end())
+        {
+            image_paths.emplace_back(filePath.string());
+        }
+    }
+    // 如果是目录，则递归遍历
+    else if (std::filesystem::is_directory(filePath))
+    {
+        for (const auto& entry : std::filesystem::recursive_directory_iterator(filePath))
+        {
+            read_image(entry.path());
+        }
+    }
+
+    return true;
+}
 
 bool CLIP_Vision::build()
 {
@@ -72,29 +93,29 @@ bool CLIP_Vision::build()
         return false;
     }
 
-    // 定义文件路径
-    std::string enginePath = "/home/clip2onnx/deploy/int8/VmodelInt8.engine";
+    // // 定义文件路径
+    // std::string enginePath = "/home/clip2onnx/deploy/int8/VmodelInt8.engine";
 
-    // 打开文件并读取Engine数据
-    std::ifstream file(enginePath, std::ios::binary);
-    if (!file.good()) { /* 文件打开失败处理 */ }
+    // // 打开文件并读取Engine数据
+    // std::ifstream file(enginePath, std::ios::binary);
+    // if (!file.good()) { /* 文件打开失败处理 */ }
 
-    // 获取文件大小
-    file.seekg(0, std::ios::end);
-    std::streampos fsize = file.tellg();
-    file.seekg(0, std::ios::beg);
+    // // 获取文件大小
+    // file.seekg(0, std::ios::end);
+    // std::streampos fsize = file.tellg();
+    // file.seekg(0, std::ios::beg);
 
-    // 分配内存来存储Engine数据
-    std::vector<char> trtModelStream(fsize);
-    file.read(trtModelStream.data(), fsize);
-    file.close();
+    // // 分配内存来存储Engine数据
+    // std::vector<char> trtModelStream(fsize);
+    // file.read(trtModelStream.data(), fsize);
+    // file.close();
 
-    // 反序列化Engine
-    mEngine = std::shared_ptr<nvinfer1::ICudaEngine>(
-        mRuntime->deserializeCudaEngine(trtModelStream.data(), fsize), samplesCommon::InferDeleter());
-
+    // // 反序列化Engine
     // mEngine = std::shared_ptr<nvinfer1::ICudaEngine>(
-    //     mRuntime->deserializeCudaEngine(plan->data(), plan->size()), samplesCommon::InferDeleter());
+    //     mRuntime->deserializeCudaEngine(trtModelStream.data(), fsize), samplesCommon::InferDeleter());
+
+    mEngine = std::shared_ptr<nvinfer1::ICudaEngine>(
+        mRuntime->deserializeCudaEngine(plan->data(), plan->size()), samplesCommon::InferDeleter());
     if (!mEngine)
     {
         return false;
@@ -141,23 +162,23 @@ bool CLIP_Vision::infer()
     // Create RAII buffer manager object
     // 简单的说，RAII 的做法是使用一个对象，在其构造时获取资源，在对象生命期控制对资源的访问使之始终保持有效，最后在对象析构的时候释放资源
     samplesCommon::BufferManager buffers(mEngine, 0, context.get());
-    auto start = std::chrono::system_clock::now();
+    auto start = std::chrono::high_resolution_clock::now();
 
-    if (!processInput(buffers))
-    {
-        return false;
-    }
-
-    // for(int i=0; i<1000; i++){
-    // // Read the input data into the managed buffers
-    // // ASSERT(mParams.inputTensorNames.size() == 1);
-    //     if (!processInput(buffers))
-    //     {
-    //         return false;
-    //     }
+    // if (!processInput(buffers))
+    // {
+    //     return false;
     // }
 
-    auto end = std::chrono::system_clock::now();
+    for(int i=0; i<10000; i++){
+    // Read the input data into the managed buffers
+    // ASSERT(mParams.inputTensorNames.size() == 1);
+        if (!processInput(buffers))
+        {
+            return false;
+        }
+    }
+
+    auto end = std::chrono::high_resolution_clock::now();
     // 计算并输出时间差
     std::chrono::duration<double> elapsed_seconds = end - start;
     // 输出以秒为单位的时间差
@@ -200,7 +221,6 @@ bool CLIP_Vision::processInput(const samplesCommon::BufferManager& buffers)
     // 读取图片
     cv::Mat origin_img;
     origin_img = cv::imread("/home/OIP-C.jpg", cv::IMREAD_COLOR);
-
     // 检查图片是否成功读取
     if (origin_img.empty()) {
         std::cout << "Could not open or find the image" << std::endl;
@@ -223,8 +243,8 @@ bool CLIP_Vision::processInput(const samplesCommon::BufferManager& buffers)
 
         const float mean_[3] = {image_mean[0], image_mean[1], image_mean[2]};
         const float std_[3] = {image_std[0], image_std[1], image_std[2]};
-        cv::Size size(inputW, inputH);
-        StandNorm_c3(hostDataBuffer, origin_img, Norm::mean_std(mean_, std_, 1/255.0, ChannelType::Invert), size);
+
+        StandNorm_c3(hostDataBuffer, origin_img, Norm::mean_std(mean_, std_, 1/255.0f, ChannelType::Invert), cv::Size(inputW, inputH));
     }
 
     return true;

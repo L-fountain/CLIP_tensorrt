@@ -214,3 +214,19 @@ bool CLIP_Base::verifyOutput(const samplesCommon::BufferManager& buffers)
     return true;
 }
 
+
+// Constructor-like function
+struct clip_image_u8_batch clip_image_u8_batch_make(std::vector<clip_image_u8> & images) {
+    struct clip_image_u8_batch batch;
+    batch.data = images.data();
+    batch.size = images.size();
+    return batch;
+}
+
+// Constructor-like function
+struct clip_image_f32_batch clip_image_f32_batch_make(std::vector<clip_image_f32> & images) {
+    struct clip_image_f32_batch batch;
+    batch.data = images.data();
+    batch.size = images.size();
+    return batch;
+}
