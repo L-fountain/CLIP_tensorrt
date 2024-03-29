@@ -14,8 +14,11 @@
 
 2. [Using Opencv preprocess](https://blog.csdn.net/weixin_45137428/article/details/122229184)
 
+    **By the way:** Multiple batch preprocessing can refer to [this](https://github.com/monatis/clip.cpp/blob/main/clip.cpp)
+
 ### The way to tokenize the words
-You can refer to [clip_tokenizer](https://github.com/ozanarmagan/clip_tokenizer_cpp)
+1. You can refer to [clip_tokenizer](https://github.com/ozanarmagan/clip_tokenizer_cpp)
+
 
 ## Step3 Build
 1. Dynamic batchsize code like [reference_1](https://zhuanlan.zhihu.com/p/392345898) 

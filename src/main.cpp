@@ -47,7 +47,7 @@ samplesCommon::VisionParams initializeVisionParams(const samplesCommon::Args& ar
     params.fp16 = args.runInFp16;
     params.image_mean = {0.48145466, 0.4578275, 0.40821073};
     params.image_std = {0.26862954, 0.26130258, 0.27577711};   
-    params.image_src = "/home/TensorRT-8.6.1.6/samples/my_demo/include/common";
+    params.image_src = params.dataDirs.size()>1? params.dataDirs[1]:"/home/TensorRT-8.6.1.6/samples/my_demo/include/common";
 
     return params;
 }
@@ -69,9 +69,9 @@ samplesCommon::LanguageParams initializeLanguageParams(const samplesCommon::Args
     params.dlaCore = args.useDLACore;
     params.int8 = args.runInInt8;
     params.int8 = args.runInFp16;
-    params.text_src = "123.txt";
     params.text_token_length = 77;
     params.vocab_path = "../../vocab//bpe_simple_vocab_16e6.txt";
+    params.text_src = params.dataDirs.size()>2? params.dataDirs[2]: "123.txt";
 
     return params;
 }
@@ -83,20 +83,21 @@ void printHelpInfo()
 {
     std::cout
         << "Usage: ./sample_onnx_mnist [-h or --help] [-d or --datadir=<path to data directory>] [--useDLACore=<int>]"
-        << std::endl;
-    std::cout << "--help          Display help information" << std::endl;
+        << std::endl<<std::endl;
+    std::cout << "--help          Display help information" << std::endl<<std::endl;
     std::cout << "--datadir       Specify path to a data directory, overriding the default. This option can be used "
                  "multiple times to add multiple directories. The first path corresponds to the folder where the model "
-                 "is located If no data directories are given, the default is to use "
-                 "(../../model/)"
-              << std::endl;
+                 "is located If no data directories are given, the default is to use '(../../model/)'. The second path "
+                 "(options) corresponds to the path of the image file or folder. The third path corresponds to the string "
+                 "or text file (. txt) to be retrieved."
+              << std::endl<<std::endl;
     std::cout << "--useDLACore=N  Specify a DLA engine for layers that support DLA. Value can range from 0 to n-1, "
                  "where n is the number of DLA engines on the platform."
-              << std::endl;
-    std::cout << "--int8          Run in Int8 mode." << std::endl;
-    std::cout << "--fp16          Run in FP16 mode." << std::endl;
-    std::cout << "--vision_model_name       Specify the name of the visual model." << std::endl;
-    std::cout << "--language_model_name     Specify the name of the language model." << std::endl;
+              << std::endl<<std::endl;
+    std::cout << "--int8          Run in Int8 mode." << std::endl<<std::endl;
+    std::cout << "--fp16          Run in FP16 mode." << std::endl<<std::endl;
+    std::cout << "--vision_model_name       Specify the name of the visual model." << std::endl<<std::endl;
+    std::cout << "--language_model_name     Specify the name of the language model." << std::endl<<std::endl;
 }
 
 int main(int argc, char** argv)
